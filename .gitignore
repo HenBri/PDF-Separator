@@ -1,0 +1,46 @@
+# Maven
+target/
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+build.log
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.settings/
+.project
+.classpath
+.factorypath
+
+# VS Code
+.vscode/
+
+# Java / JVM
+*.class
+*.jar
+*.war
+*.ear
+*.ctxt
+
+# Sistema y logs
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+
+# Distribuciones y artefactos locales
+DskV2/
+installer-msi/
+DskV2/runtime/
+*.msi
+*.bak

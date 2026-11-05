@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.chromasplit.ui.controller.MainController"
+            styleClass="root-pane">
+
+    <top>
+        <VBox>
+            <MenuBar styleClass="app-menu">
+                <Menu text="Opciones">
+                    <MenuItem text="Precios" onAction="#handleOpenPrices" />
+                    <MenuItem text="Cambiar carpeta de destino..." onAction="#handleChangeExportDir" />
+                </Menu>
+            </MenuBar>
+            <HBox styleClass="title-bar" alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="12" right="16" bottom="12" left="16"/></padding>
+                <Text styleClass="title-text" text="DskV2" />
+                <Text styleClass="version-text" text="v2.0.0" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label styleClass="status-label" fx:id="statusLabel" text="Esperando archivo..." />
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <SplitPane dividerPositions="0.70" orientation="HORIZONTAL">
+            <VBox alignment="CENTER" spacing="16" styleClass="center-panel">
+                <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
+
+                <VBox fx:id="dropZone" alignment="CENTER" spacing="12"
+                      styleClass="drop-zone" VBox.vgrow="ALWAYS"
+                      prefHeight="250">
+                    <padding><Insets top="40" bottom="40" left="40" right="40"/></padding>
+                    <Text styleClass="drop-icon" text="📄" />
+                    <Label fx:id="dropLabel" styleClass="drop-label"
+                           text="Arrastra tu archivo PDF aquí o haz clic para buscar" />
+                    <Label fx:id="fileNameLabel" styleClass="file-name" />
+                </VBox>
+
+                <VBox fx:id="resultsPanel" alignment="TOP_LEFT" spacing="12" visible="false" managed="false"
+                      VBox.vgrow="ALWAYS" fillWidth="true">
+                    <padding><Insets top="8" bottom="8" left="0" right="0"/></padding>
+                    
+                    <Separator styleClass="separator" />
+                    
+                    <Label text="Documentos generados" styleClass="section-title" />
+                    
+                    <HBox spacing="12" alignment="TOP_LEFT">
+                        <VBox fx:id="colorCard" spacing="8" styleClass="result-card" fillWidth="true" HBox.hgrow="ALWAYS">
+                            <padding><Insets top="12" bottom="12" left="12" right="12"/></padding>
+                            <HBox spacing="8" alignment="CENTER_LEFT">
+                                <Label text="🎨" style="-fx-font-size: 20px;" />
+                                <VBox spacing="2">
+                                    <Label text="Documento Color" style="-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #1B2A4A;" />
+                                    <Label fx:id="colorFileNameLabel" text="—" style="-fx-font-size: 11px; -fx-text-fill: #6B7B9B;" />
+                                </VBox>
+                            </HBox>
+                            <Button fx:id="openColorButton" text="Abrir en navegador" onAction="#handleOpenColor"
+                                    styleClass="result-button" disable="true" prefWidth="160" prefHeight="32" />
+                        </VBox>
+                        
+                        <VBox fx:id="bwCard" spacing="8" styleClass="result-card" fillWidth="true" HBox.hgrow="ALWAYS">
+                            <padding><Insets top="12" bottom="12" left="12" right="12"/></padding>
+                            <HBox spacing="8" alignment="CENTER_LEFT">
+                                <Label text="⚫" style="-fx-font-size: 20px;" />
+                                <VBox spacing="2">
+                                    <Label text="Documento B/N" style="-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #1B2A4A;" />
+                                    <Label fx:id="bwFileNameLabel" text="—" style="-fx-font-size: 11px; -fx-text-fill: #6B7B9B;" />
+                                </VBox>
+                            </HBox>
+                            <Button fx:id="openBwButton" text="Abrir en navegador" onAction="#handleOpenBw"
+                                    styleClass="result-button" disable="true" prefWidth="160" prefHeight="32" />
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <HBox spacing="10" alignment="CENTER">
+                    <Button fx:id="exportButton" styleClass="export-button"
+                            text="Exportar Documentos" onAction="#handleExport"
+                            prefHeight="40" prefWidth="240" />
+                    <Button fx:id="clearButton" styleClass="clear-button"
+                            text="Limpiar" onAction="#handleClear"
+                            prefHeight="40" prefWidth="100" />
+                </HBox>
+            </VBox>
+
+            <VBox spacing="12" styleClass="report-panel">
+                <padding><Insets top="20" bottom="20" left="16" right="16"/></padding>
+
+                <Text styleClass="report-title" text="Panel de Informes" />
+
+                <GridPane hgap="8" vgap="8" styleClass="metrics-grid">
+                    <Label text="Total de hojas:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <Label fx:id="totalLabel" text="0" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="metric-value" />
+
+                    <Label text="Hojas B/N:" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <Label fx:id="bwLabel" text="0" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="metric-value" />
+
+                    <Label text="Hojas Color:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <Label fx:id="colorLabel" text="0" GridPane.rowIndex="2" GridPane.columnIndex="1" styleClass="metric-value" />
+                </GridPane>
+
+                <Separator />
+
+                <Text text="Páginas a Color Detectadas" styleClass="section-title" />
+
+                <VBox spacing="6">
+                    <Label text="Índice Físico:" style="-fx-font-weight: bold;" />
+                    <ScrollPane hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" prefHeight="80" maxHeight="120" fitToWidth="true">
+                        <Label fx:id="physicalIdxLabel" text="—" wrapText="true" styleClass="list-value" />
+                    </ScrollPane>
+                </VBox>
+
+                <Separator />
+
+                <VBox spacing="6">
+                    <Label text="Cálculo de Precios" styleClass="section-title" />
+                    <GridPane hgap="8" vgap="6">
+                        <Label text="Total Hojas B/N:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                        <Label fx:id="totalBwPriceLabel" text="0.00" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="metric-value" />
+                        <Label text="Total Color:" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                        <Label fx:id="totalColorPriceLabel" text="0.00" GridPane.rowIndex="1" GridPane.columnIndex="1" styleClass="metric-value" />
+                        <Label text="Extras:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                        <TextField fx:id="extrasField" text="0" GridPane.rowIndex="2" GridPane.columnIndex="1" prefWidth="80" />
+                        <Separator GridPane.rowIndex="3" GridPane.columnSpan="2" />
+                        <Label text="Precio Total:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
+                        <Label fx:id="totalPriceLabel" text="0.00" GridPane.rowIndex="4" GridPane.columnIndex="1" styleClass="metric-value" style="-fx-font-weight: bold;" />
+                    </GridPane>
+                </VBox>
+            </VBox>
+        </SplitPane>
+    </center>
+
+    <bottom>
+        <VBox spacing="3" styleClass="progress-bar-container">
+            <padding><Insets top="8" bottom="8" left="16" right="16"/></padding>
+            <ProgressBar fx:id="progressBar" progress="0" maxWidth="Infinity" prefHeight="8" />
+            <ProgressBar fx:id="exportProgressBar" progress="0" maxWidth="Infinity" prefHeight="8" />
+        </VBox>
+    </bottom>
+
+</BorderPane>
