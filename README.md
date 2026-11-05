@@ -108,3 +108,4 @@ La aplicación guarda en `java.util.prefs.Preferences`:
 ## Licencia
 
 Este proyecto es de codigo abierto.
+<img width="959" height="668" alt="image" src="https://github.com/user-attachments/assets/0df6e200-ce1a-4b55-90e9-0ad6e2916164" />
