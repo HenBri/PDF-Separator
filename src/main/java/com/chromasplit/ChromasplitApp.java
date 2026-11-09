@@ -8,6 +8,12 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class ChromasplitApp extends Application {
+    private final PdfBrowserService pdfBrowserService = new PdfBrowserService();
+
+    @Override
+    public void stop() {
+        pdfBrowserService.close();
+    }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -20,7 +26,7 @@ public class ChromasplitApp extends Application {
         var loader = new FXMLLoader(getClass().getResource("/com/chromasplit/ui/main.fxml"));
         loader.setControllerFactory(clazz -> {
             if (clazz == MainController.class) {
-                return new MainController(priceStorage, exportStorage, pdfService);
+                return new MainController(priceStorage, exportStorage, pdfService, pdfBrowserService);
             }
             try {
                 return clazz.getDeclaredConstructor().newInstance();

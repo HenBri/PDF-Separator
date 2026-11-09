@@ -14,7 +14,41 @@ public class AnalysisResult {
     private final List<ColorTier> colorPageTiers;
 
     public enum ColorTier {
-        NONE, BASE, MEDIUM, HIGH
+        NONE("B/N", 0), BASE("Color bajo", 0.001), MEDIUM("Color medio", 0.35), HIGH("Color alto", 0.65);
+
+        private final String label;
+        private final double boundary;
+
+        ColorTier(String label, double boundary) {
+            this.label = label;
+            this.boundary = boundary;
+        }
+
+        public String getLabel() { return label; }
+
+        private static String percent(double value) {
+            return java.math.BigDecimal.valueOf(value).multiply(java.math.BigDecimal.valueOf(100))
+                    .stripTrailingZeros().toPlainString().replace('.', ',') + " %";
+        }
+
+        public String getCoverageRange() {
+            return switch (this) {
+                case NONE -> "Menor al " + percent(BASE.boundary);
+                case BASE -> percent(BASE.boundary) + " ≤ cobertura ≤ " + percent(MEDIUM.boundary);
+                case MEDIUM -> percent(MEDIUM.boundary) + " < cobertura < " + percent(HIGH.boundary);
+                case HIGH -> "Cobertura ≥ " + percent(HIGH.boundary);
+            };
+        }
+
+        public static ColorTier fromCoverage(double coverage) {
+            if (!Double.isFinite(coverage) || coverage < 0 || coverage > 1) {
+                throw new IllegalArgumentException("Cobertura fuera de rango");
+            }
+            if (coverage < BASE.boundary) return NONE;
+            if (coverage <= MEDIUM.boundary) return BASE;
+            if (coverage < HIGH.boundary) return MEDIUM;
+            return HIGH;
+        }
     }
 
     public AnalysisResult(int totalPages, int bwPages, int colorPages,

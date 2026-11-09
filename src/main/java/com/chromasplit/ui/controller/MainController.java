@@ -12,10 +12,11 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
+import java.math.BigDecimal;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
-import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,6 +41,10 @@ public class MainController {
     @FXML private Label statusLabel;
     @FXML private Button exportButton;
     @FXML private Button clearButton;
+    @FXML private Button detailsButton;
+    @FXML private GridPane pricingBreakdownGrid;
+    @FXML private Label extrasErrorLabel;
+    private AnalysisResult currentAnalysis;
 
     @FXML private VBox resultsPanel;
     @FXML private VBox colorCard;
@@ -55,11 +60,16 @@ public class MainController {
     private PriceStorage priceStorage;
     private ExportStorage exportStorage;
     private File lastExportDir;
+    private final PdfBrowserService pdfBrowserService;
+    private Path exportedColorFile;
+    private Path exportedBwFile;
 
-    public MainController(PriceStorage priceStorage, ExportStorage exportStorage, PdfService pdfService) {
+    public MainController(PriceStorage priceStorage, ExportStorage exportStorage, PdfService pdfService,
+                          PdfBrowserService pdfBrowserService) {
         this.priceStorage = priceStorage;
         this.exportStorage = exportStorage;
         this.pdfService = pdfService;
+        this.pdfBrowserService = pdfBrowserService;
     }
 
     @FXML
@@ -76,6 +86,7 @@ public class MainController {
         setupDragDrop();
         bindUI();
         extrasField.textProperty().addListener((obs, old, val) -> updatePriceDisplay());
+        updatePriceDisplay();
     }
 
     private void bindUI() {
@@ -86,6 +97,7 @@ public class MainController {
             exportButton.setDisable(val || !hasDoc);
             clearButton.setDisable(val);
             dropZone.setDisable(val);
+            checkAndEnableOpenButtons();
         });
     }
 
@@ -165,7 +177,8 @@ public class MainController {
         bwLabel.setText(String.valueOf(result.getBwPages()));
         colorLabel.setText(String.valueOf(result.getColorPages()));
         physicalIdxLabel.setText(formatList(result.getColorPageIndices()));
-        updatePriceDisplay(result.getBwPages(), result.getColorPages());
+        currentAnalysis = result;
+        updatePriceDisplay();
         state.setRunning(false);
         state.setComplete(true);
         state.setStatus("Análisis completado. Listo para exportar.");
@@ -177,6 +190,7 @@ public class MainController {
 
     @FXML
     private void handleExport() {
+        if (!pdfService.hasDocument() || state.runningProperty().get()) return;
         if (lastExportDir == null || !lastExportDir.isDirectory()) {
             DirectoryChooser dirChooser = new DirectoryChooser();
             dirChooser.setTitle("Seleccionar carpeta de destino");
@@ -187,11 +201,17 @@ public class MainController {
             exportStorage.saveLastExportDir(dir.getAbsolutePath());
         }
 
+        exportedColorFile = null;
+        exportedBwFile = null;
+        pdfBrowserService.clear();
         state.setRunning(true);
         state.setStatus("Exportando documentos...");
         state.setOutputDir(lastExportDir.getAbsolutePath());
 
         String baseName = stripExtension(state.getFileName());
+        Path outputDir = lastExportDir.toPath();
+        boolean hasColor = parseIntSafe(colorLabel.getText()) > 0;
+        boolean hasBw = parseIntSafe(bwLabel.getText()) > 0;
 
         exportProgressBar.setVisible(true);
         exportProgressBar.setProgress(0);
@@ -199,7 +219,7 @@ public class MainController {
         Task<Void> exportTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                pdfService.export(lastExportDir.toPath(), baseName, p -> updateProgress(p, 1.0));
+                pdfService.export(outputDir, baseName, p -> updateProgress(p, 1.0));
                 return null;
             }
 
@@ -207,6 +227,8 @@ public class MainController {
                 protected void succeeded() {
                     Platform.runLater(() -> {
                         exportProgressBar.progressProperty().unbind();
+                        exportedColorFile = hasColor ? outputDir.resolve(baseName + "_COLOR.pdf") : null;
+                        exportedBwFile = hasBw ? outputDir.resolve(baseName + "_BN.pdf") : null;
                         state.setRunning(false);
                         state.setStatus("Documentos exportados correctamente.");
                         exportProgressBar.setProgress(1.0);
@@ -232,6 +254,7 @@ public class MainController {
 
     @FXML
     private void handleChangeExportDir() {
+        if (state.runningProperty().get()) return;
         lastExportDir = null;
         openColorButton.setDisable(true);
         openBwButton.setDisable(true);
@@ -255,6 +278,13 @@ public class MainController {
     }
 
     private void resetUI() {
+        pricingBreakdownGrid.setVisible(false);
+        pricingBreakdownGrid.setManaged(false);
+        detailsButton.setText("Ver detalle");
+        currentAnalysis = null;
+        exportedColorFile = null;
+        exportedBwFile = null;
+        pdfBrowserService.clear();
         totalLabel.setText("0");
         bwLabel.setText("0");
         colorLabel.setText("0");
@@ -263,6 +293,7 @@ public class MainController {
         totalColorPriceLabel.setText(formatPrice(0));
         totalPriceLabel.setText(formatPrice(0));
         extrasField.setText("0");
+        updatePriceDisplay();
         progressBar.setProgress(0);
         exportProgressBar.setProgress(0);
         exportProgressBar.setVisible(false);
@@ -291,61 +322,73 @@ public class MainController {
     }
 
     private void checkAndEnableOpenButtons() {
-        if (lastExportDir != null && lastExportDir.isDirectory()) {
-            File colorFile = new File(lastExportDir, colorFileNameLabel.getText());
-            File bwFile = new File(lastExportDir, bwFileNameLabel.getText());
-            openColorButton.setDisable(!colorFile.exists());
-            openBwButton.setDisable(!bwFile.exists());
-        } else {
-            openColorButton.setDisable(true);
-            openBwButton.setDisable(true);
-        }
+        boolean running = state.runningProperty().get();
+        openColorButton.setDisable(running || exportedColorFile == null || !Files.isRegularFile(exportedColorFile));
+        openBwButton.setDisable(running || exportedBwFile == null || !Files.isRegularFile(exportedBwFile));
     }
 
     @FXML
     private void handleOpenColor() {
-        openPdfInBrowser(colorFileNameLabel.getText());
+        openPdfInBrowser(exportedColorFile);
     }
 
     @FXML
     private void handleOpenBw() {
-        openPdfInBrowser(bwFileNameLabel.getText());
+        openPdfInBrowser(exportedBwFile);
     }
 
-    private void openPdfInBrowser(String fileName) {
-        if (lastExportDir == null || fileName.equals("—")) return;
-        
-        File file = new File(lastExportDir, fileName);
-        if (!file.exists()) {
-            state.setStatus("Archivo no encontrado: " + fileName);
-            return;
-        }
-        
+    private void openPdfInBrowser(Path file) {
+        if (file == null || state.runningProperty().get()) return;
         try {
-            Desktop.getDesktop().browse(file.toURI());
-            state.setStatus("Abierto en navegador: " + fileName);
-        } catch (IOException e) {
+            pdfBrowserService.open(file);
+            state.setStatus("Abierto en navegador: " + file.getFileName());
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
             state.setStatus("Error al abrir: " + e.getMessage());
+            checkAndEnableOpenButtons();
         }
+    }
+
+    @FXML
+    private void handleToggleDetails() {
+        boolean show = !pricingBreakdownGrid.isVisible();
+        pricingBreakdownGrid.setVisible(show);
+        pricingBreakdownGrid.setManaged(show);
+        detailsButton.setText(show ? "Ocultar detalle" : "Ver detalle");
     }
 
     private void updatePriceDisplay() {
-        int bwPages = parseIntSafe(bwLabel.getText());
-        int colorPages = parseIntSafe(colorLabel.getText());
-        updatePriceDisplay(bwPages, colorPages);
+        BigDecimal extras = BigDecimal.ZERO;
+        boolean valid = true;
+        try {
+            extras = Money.parse(extrasField.getText());
+        } catch (IllegalArgumentException e) {
+            valid = false;
+        }
+        extrasErrorLabel.setText(valid ? "" : "Extras: importe no negativo, máximo dos decimales.");
+        extrasErrorLabel.setVisible(!valid);
+        extrasErrorLabel.setManaged(!valid);
+        var breakdown = pricingCalculator.calculate(currentAnalysis, priceStorage, extras);
+        totalBwPriceLabel.setText(formatPrice(breakdown.bw()));
+        totalColorPriceLabel.setText(formatPrice(breakdown.colorTotal()));
+        totalPriceLabel.setText(valid ? formatPrice(breakdown.total()) : "—");
+
+        pricingBreakdownGrid.getChildren().clear();
+        pricingBreakdownGrid.addRow(0, new Label("Categoría"), new Label("Cant."),
+                new Label("Precio/pág."), new Label("Subtotal"));
+        addPriceRow(1, AnalysisResult.ColorTier.NONE, currentAnalysis == null ? 0 : currentAnalysis.getBwPages(),
+                priceStorage.loadBwPrice(), breakdown.bw());
+        addPriceRow(2, AnalysisResult.ColorTier.BASE, currentAnalysis == null ? 0 : currentAnalysis.getColorBasePages(),
+                priceStorage.loadColorBasePrice(), breakdown.low());
+        addPriceRow(3, AnalysisResult.ColorTier.MEDIUM, currentAnalysis == null ? 0 : currentAnalysis.getColorMediumPages(),
+                priceStorage.loadColorMediumPrice(), breakdown.medium());
+        addPriceRow(4, AnalysisResult.ColorTier.HIGH, currentAnalysis == null ? 0 : currentAnalysis.getColorHighPages(),
+                priceStorage.loadColorHighPrice(), breakdown.high());
     }
 
-    private void updatePriceDisplay(int bwPages, int colorPages) {
-        double bwPrice = priceStorage.loadBwPrice();
-        double colorPrice = priceStorage.loadColorBasePrice(); // Use base price as single color price
-        double extras = parseDoubleSafe(extrasField.getText());
-        
-        double bwTotal = pricingCalculator.calculateBwTotal(bwPages, bwPrice);
-        double colorTotal = pricingCalculator.calculateColorTotal(colorPages, colorPrice);
-        double total = bwTotal + colorTotal + extras;
-        
-        totalBwPriceLabel.setText(formatPrice(bwTotal));
-        totalColorPriceLabel.setText(formatPrice(colorTotal));
-        totalPriceLabel.setText(formatPrice(total));
+    private void addPriceRow(int row, AnalysisResult.ColorTier tier, int count, double price, BigDecimal subtotal) {
+        Label category = new Label(tier.getLabel());
+        category.setTooltip(new Tooltip(tier.getCoverageRange()));
+        pricingBreakdownGrid.addRow(row, category, new Label(Integer.toString(count)),
+                new Label(formatPrice(Money.fromStored(price))), new Label(formatPrice(subtotal)));
     }
 }

@@ -25,10 +25,6 @@ import java.util.function.DoubleConsumer;
 
 public class ChromaAnalyzer {
 
-    private static final double TIER_BASE_MIN = 0.001;     // 0.1% - mínimo BASE
-    private static final double TIER_BASE_MAX = 0.07;      // 7% - máximo BASE
-    private static final double TIER_HIGH_THRESHOLD = 0.30;    // 30% - mínimo HIGH
-
     private static final int DEFAULT_RASTER_DPI = 72;
     private static final int COLOR_TOLERANCE = 10;
     private static final int WHITE_THRESHOLD = 245;
@@ -55,19 +51,7 @@ public class ChromaAnalyzer {
     AnalysisResult.ColorTier checkPageForColorTier(PDDocument document, int pageIndex, PDPage page) throws IOException {
         double colorCoveragePercent = calculateColorCoveragePercentRasterized(document, pageIndex);
         
-        if (colorCoveragePercent < TIER_BASE_MIN) {
-            // < 0.1% -> B/N (NONE)
-            return AnalysisResult.ColorTier.NONE;
-        } else if (colorCoveragePercent <= TIER_BASE_MAX) {
-            // >=0.1% y <=7% -> BASE
-            return AnalysisResult.ColorTier.BASE;
-        } else if (colorCoveragePercent < TIER_HIGH_THRESHOLD) {
-            // >7% y <30% -> MEDIUM
-            return AnalysisResult.ColorTier.MEDIUM;
-        } else {
-            // >=30% -> HIGH
-            return AnalysisResult.ColorTier.HIGH;
-        }
+        return AnalysisResult.ColorTier.fromCoverage(colorCoveragePercent);
     }
 
     double calculateColorCoveragePercent(PDPage page) throws IOException {

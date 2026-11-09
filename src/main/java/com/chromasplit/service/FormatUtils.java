@@ -13,6 +13,10 @@ public final class FormatUtils {
         return CURRENCY_FORMAT.format(value);
     }
 
+    public static String formatPrice(java.math.BigDecimal value) {
+        return CURRENCY_FORMAT.format(value);
+    }
+
     public static int parseIntSafe(String text) {
         try {
             return Integer.parseInt(text);

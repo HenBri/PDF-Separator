@@ -14,55 +14,68 @@ public class PreferencesPriceStorage implements PriceStorage {
     private static final double DEFAULT_COLOR_MEDIUM = 1.50;
     private static final double DEFAULT_COLOR_HIGH = 3.00;
 
-    private final Preferences prefs = Preferences.userNodeForPackage(PreferencesPriceStorage.class);
+    private final Preferences prefs;
+
+    public PreferencesPriceStorage() {
+        this(Preferences.userNodeForPackage(PreferencesPriceStorage.class));
+    }
+
+    PreferencesPriceStorage(Preferences prefs) {
+        this.prefs = prefs;
+    }
+
+    private double load(String key, double fallback) {
+        double value = prefs.getDouble(key, fallback);
+        return Double.isFinite(value) && value >= 0 ? Money.fromStored(value).doubleValue() : fallback;
+    }
 
     @Override
     public double loadBwPrice() {
-        return prefs.getDouble(KEY_BW, DEFAULT_BW);
+        return load(KEY_BW, DEFAULT_BW);
     }
 
     @Override
     public double loadColorPrice() {
-        return prefs.getDouble(KEY_COLOR, DEFAULT_COLOR);
+        return load(KEY_COLOR, DEFAULT_COLOR);
     }
 
     @Override
     public double loadColorBasePrice() {
-        return prefs.getDouble(KEY_COLOR_BASE, DEFAULT_COLOR_BASE);
+        return load(KEY_COLOR_BASE, DEFAULT_COLOR_BASE);
     }
 
     @Override
     public double loadColorMediumPrice() {
-        return prefs.getDouble(KEY_COLOR_MEDIUM, DEFAULT_COLOR_MEDIUM);
+        return load(KEY_COLOR_MEDIUM, DEFAULT_COLOR_MEDIUM);
     }
 
     @Override
     public double loadColorHighPrice() {
-        return prefs.getDouble(KEY_COLOR_HIGH, DEFAULT_COLOR_HIGH);
+        return load(KEY_COLOR_HIGH, DEFAULT_COLOR_HIGH);
     }
 
     @Override
     public void saveBwPrice(double price) {
-        prefs.putDouble(KEY_BW, Math.max(0, price));
+        prefs.putDouble(KEY_BW, Money.fromStored(price).doubleValue());
     }
 
     @Override
     public void saveColorPrice(double price) {
-        prefs.putDouble(KEY_COLOR, Math.max(0, price));
+        prefs.putDouble(KEY_COLOR, Money.fromStored(price).doubleValue());
     }
 
     @Override
     public void saveColorBasePrice(double price) {
-        prefs.putDouble(KEY_COLOR_BASE, Math.max(0, price));
+        prefs.putDouble(KEY_COLOR_BASE, Money.fromStored(price).doubleValue());
     }
 
     @Override
     public void saveColorMediumPrice(double price) {
-        prefs.putDouble(KEY_COLOR_MEDIUM, Math.max(0, price));
+        prefs.putDouble(KEY_COLOR_MEDIUM, Money.fromStored(price).doubleValue());
     }
 
     @Override
     public void saveColorHighPrice(double price) {
-        prefs.putDouble(KEY_COLOR_HIGH, Math.max(0, price));
+        prefs.putDouble(KEY_COLOR_HIGH, Money.fromStored(price).doubleValue());
     }
 }

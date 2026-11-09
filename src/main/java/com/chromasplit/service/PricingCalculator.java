@@ -1,8 +1,24 @@
 package com.chromasplit.service;
 
 import com.chromasplit.model.AnalysisResult;
+import java.math.BigDecimal;
 
 public class PricingCalculator {
+
+    public record Breakdown(BigDecimal bw, BigDecimal low, BigDecimal medium, BigDecimal high,
+                            BigDecimal extras) {
+        public BigDecimal colorTotal() { return low.add(medium).add(high); }
+        public BigDecimal total() { return bw.add(colorTotal()).add(extras); }
+    }
+
+    public Breakdown calculate(AnalysisResult result, PriceStorage prices, BigDecimal extras) {
+        return new Breakdown(
+                Money.fromStored(prices.loadBwPrice()).multiply(BigDecimal.valueOf(result == null ? 0 : result.getBwPages())),
+                Money.fromStored(prices.loadColorBasePrice()).multiply(BigDecimal.valueOf(result == null ? 0 : result.getColorBasePages())),
+                Money.fromStored(prices.loadColorMediumPrice()).multiply(BigDecimal.valueOf(result == null ? 0 : result.getColorMediumPages())),
+                Money.fromStored(prices.loadColorHighPrice()).multiply(BigDecimal.valueOf(result == null ? 0 : result.getColorHighPages())),
+                extras);
+    }
 
     public double calculateBwTotal(int bwPages, double bwPrice) {
         return bwPrice * bwPages;

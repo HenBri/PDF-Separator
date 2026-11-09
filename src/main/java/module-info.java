@@ -1,5 +1,6 @@
 module com.chromasplit {
     requires java.desktop;
+    requires jdk.httpserver;
     requires java.prefs;
     requires javafx.controls;
     requires javafx.fxml;

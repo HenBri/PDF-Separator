@@ -29,7 +29,7 @@
     </top>
 
     <center>
-        <SplitPane dividerPositions="0.70" orientation="HORIZONTAL">
+        <SplitPane dividerPositions="0.60" orientation="HORIZONTAL">
             <VBox alignment="CENTER" spacing="16" styleClass="center-panel">
                 <padding><Insets top="24" bottom="24" left="24" right="24"/></padding>
 
@@ -61,8 +61,8 @@
                                     <Label fx:id="colorFileNameLabel" text="—" style="-fx-font-size: 11px; -fx-text-fill: #6B7B9B;" />
                                 </VBox>
                             </HBox>
-                            <Button fx:id="openColorButton" text="Abrir en navegador" onAction="#handleOpenColor"
-                                    styleClass="result-button" disable="true" prefWidth="160" prefHeight="32" />
+                            <Button fx:id="openColorButton" text="Abrir en el navegador" onAction="#handleOpenColor"
+                                    styleClass="result-button" disable="true" prefWidth="180" prefHeight="32" />
                         </VBox>
                         
                         <VBox fx:id="bwCard" spacing="8" styleClass="result-card" fillWidth="true" HBox.hgrow="ALWAYS">
@@ -74,8 +74,8 @@
                                     <Label fx:id="bwFileNameLabel" text="—" style="-fx-font-size: 11px; -fx-text-fill: #6B7B9B;" />
                                 </VBox>
                             </HBox>
-                            <Button fx:id="openBwButton" text="Abrir en navegador" onAction="#handleOpenBw"
-                                    styleClass="result-button" disable="true" prefWidth="160" prefHeight="32" />
+                            <Button fx:id="openBwButton" text="Abrir en el navegador" onAction="#handleOpenBw"
+                                    styleClass="result-button" disable="true" prefWidth="180" prefHeight="32" />
                         </VBox>
                     </HBox>
                 </VBox>
@@ -90,6 +90,7 @@
                 </HBox>
             </VBox>
 
+            <ScrollPane fitToWidth="true" minWidth="330" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED">
             <VBox spacing="12" styleClass="report-panel">
                 <padding><Insets top="20" bottom="20" left="16" right="16"/></padding>
 
@@ -121,6 +122,9 @@
 
                 <VBox spacing="6">
                     <Label text="Cálculo de Precios" styleClass="section-title" />
+                    <Button fx:id="detailsButton" text="Ver detalle" onAction="#handleToggleDetails"
+                            styleClass="result-button" />
+                    <GridPane fx:id="pricingBreakdownGrid" hgap="8" vgap="6" visible="false" managed="false" />
                     <GridPane hgap="8" vgap="6">
                         <Label text="Total Hojas B/N:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
                         <Label fx:id="totalBwPriceLabel" text="0.00" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="metric-value" />
@@ -132,8 +136,11 @@
                         <Label text="Precio Total:" GridPane.rowIndex="4" GridPane.columnIndex="0" style="-fx-font-weight: bold;" />
                         <Label fx:id="totalPriceLabel" text="0.00" GridPane.rowIndex="4" GridPane.columnIndex="1" styleClass="metric-value" style="-fx-font-weight: bold;" />
                     </GridPane>
+                    <Label fx:id="extrasErrorLabel" wrapText="true" visible="false" managed="false"
+                           style="-fx-text-fill: #b42318;" />
                 </VBox>
             </VBox>
+            </ScrollPane>
         </SplitPane>
     </center>
 
